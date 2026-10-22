@@ -1,0 +1,29 @@
+{
+  "name": "vortexcones-lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Runnable source code and tests accompanying VortexCones technical videos.",
+  "license": "MIT",
+  "author": "VortexCones",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VortexCones/VortexConesLab.git"
+  },
+  "homepage": "https://github.com/VortexCones/VortexConesLab#readme",
+  "bugs": {
+    "url": "https://github.com/VortexCones/VortexConesLab/issues"
+  },
+  "scripts": {
+    "start": "npm run ld:app",
+    "test": "npm run ld:test",
+    "ld:app": "node scenarios/live-dashboard-no-refresh/app/server.mjs",
+    "ld:emit": "node scenarios/live-dashboard-no-refresh/app/emit.mjs",
+    "ld:drop": "node scenarios/live-dashboard-no-refresh/app/drop.mjs",
+    "ld:stage1": "node scenarios/live-dashboard-no-refresh/app/stage1.mjs",
+    "ld:test": "node --test --test-timeout=60000 --test-reporter=./scenarios/live-dashboard-no-refresh/tests/reporter.mjs scenarios/live-dashboard-no-refresh/tests/stage1.test.mjs scenarios/live-dashboard-no-refresh/tests/server.test.mjs scenarios/live-dashboard-no-refresh/tests/replay-contract.test.mjs scenarios/live-dashboard-no-refresh/tests/dashboard.test.mjs",
+    "ld:prove-failure": "node scenarios/live-dashboard-no-refresh/tests/prove-failure.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
+  }
+}

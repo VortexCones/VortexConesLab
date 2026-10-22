@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live Dashboard</title>
+  <style>
+    :root { --bg: #0b1020; --panel: #121a2b; --line: #1e293b; --text: #e2e8f0; --muted: #94a3b8;
+            --blue: #3b82f6; --cyan: #22d3ee; --ok: #166534; --warn: #92400e; --bad: #991b1b; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+           font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; }
+    main { max-width: 36rem; margin: 0 auto; padding: 1.75rem 1.5rem; }
+    h1 { font-size: 2rem; margin: 0 0 1rem; letter-spacing: .01em; }
+    #status { display: inline-block; padding: .35rem 1rem; border-radius: 2rem; font-size: 1.25rem; font-weight: 600; }
+    #status[data-state="connecting"], #status[data-state="reconnecting"] { background: var(--warn); }
+    #status[data-state="connected"] { background: var(--ok); }
+    #status[data-state="disconnected"] { background: var(--bad); }
+    .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; margin: 1.25rem 0; }
+    .tile { background: var(--panel); border: 1px solid var(--line); border-radius: .75rem; padding: .8rem .9rem; }
+    .tile .name { color: var(--muted); font-size: 1rem; }
+    .tile .value { font-size: 2.6rem; font-weight: 700; line-height: 1.1; color: var(--cyan); }
+    .tile .unit { color: var(--muted); font-size: .95rem; }
+    .counter { margin: 0 0 .75rem; font-size: 1.25rem; color: var(--muted); }
+    #counter-box { display: inline-block; }
+    #notice { margin: 0 0 .75rem; padding: .5rem .8rem; border-left: 4px solid #facc15; background: var(--panel); font-size: 1.05rem; }
+    #count { color: var(--text); font-size: 1.9rem; font-weight: 700; margin-right: .4rem; }
+    ul { list-style: none; padding: 0; margin: .5rem 0 0; font-size: 1.2rem; font-family: ui-monospace, Consolas, monospace; }
+    li { padding: .28rem 0; border-bottom: 1px solid var(--line); color: #cbd5e1; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Live Dashboard</h1>
+  <div id="status" data-state="connecting" role="status">Connecting…</div>
+  <div class="tiles">
+    <div class="tile" id="tile-orders"><div class="name">Orders</div><div class="value">0</div><div class="unit">per min</div></div>
+    <div class="tile" id="tile-visitors"><div class="name">Visitors</div><div class="value">0</div><div class="unit">online</div></div>
+    <div class="tile" id="tile-errors"><div class="name">Errors</div><div class="value">0</div><div class="unit">per min</div></div>
+  </div>
+  <div class="counter"><span id="counter-box"><b id="count">0</b>events received</span></div>
+  <p id="notice" role="status" hidden></p>
+  <ul id="log"></ul>
+</main>
+<script>
+  const label = { connecting: 'Connecting…', connected: 'Connected', reconnecting: 'Reconnecting…', disconnected: 'Disconnected' };
+  const statusEl = document.getElementById('status');
+  const countEl = document.getElementById('count');
+  const logEl = document.getElementById('log');
+  const tile = (metric) => document.querySelector(`#tile-${metric} .value`);
+  let count = 0;
+
+  const setState = (state) => { statusEl.dataset.state = state; statusEl.textContent = label[state]; };
+
+  function render(e) {
+    countEl.textContent = String(count);
+    const li = document.createElement('li');
+    li.textContent = `#${e.seq}  ${e.label} = ${e.value}`;
+    logEl.prepend(li);
+    while (logEl.children.length > 5) logEl.lastChild.remove();
+  }
+
+  // >>> client
+  // One long-lived HTTP request. If it drops, EventSource reconnects by itself.
+  const source = new EventSource('/events');
+  source.onopen = () => setState('connected');
+  source.onerror = () => setState(
+    source.readyState === EventSource.CLOSED
+      ? 'disconnected' : 'reconnecting');
+  source.addEventListener('metric', (event) => {
+    const e = JSON.parse(event.data);
+    tile(e.metric).textContent = e.value;
+    count += 1;
+    render(e);
+  });
+  // <<<
+
+  // The server says when a reconnect could not be replayed in full (see CONTRACT.md).
+  const noticeEl = document.getElementById('notice');
+  const tell = (text) => { noticeEl.textContent = text; noticeEl.hidden = false; };
+  source.addEventListener('gap', (event) => {
+    const { from, to } = JSON.parse(event.data);
+    tell(`Missed events #${from} to #${to}: too old to replay.`);
+  });
+  source.addEventListener('reset', () => tell('The server restarted: its numbering began again, so earlier events are not shown.'));
+</script>
+</body>
+</html>

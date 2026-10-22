@@ -1,0 +1,11 @@
+# dependencies
+node_modules/
+
+# generated output and logs
+output/
+*.log
+npm-debug.log*
+
+# environment files and local secrets
+.env
+.env.*
