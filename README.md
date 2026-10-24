@@ -2,6 +2,11 @@
 
 Runnable source code, practical implementations, and reproducible experiments accompanying VortexCones technical videos. Explore real software, test technical claims, investigate failure modes, and learn from evidence-backed results.
 
+Videos in this repository:
+
+- **Live Dashboard: no page refresh**, in `scenarios/live-dashboard-no-refresh` (see "Live Dashboard: no page refresh" below).
+- **Node.js shutdown and an open stream**, in `scenarios/node-shutdown-sse` (see "Node.js shutdown and an open stream: a small test server" below).
+
 ## Live Dashboard: no page refresh
 
 A small Node.js dashboard that updates the moment something happens, without reloading the page, using Server-Sent Events (SSE). It accompanies the VortexCones video "Build a Live Dashboard in Node.js - No Page Refresh". It is a teaching example with synthetic sample data, not production software.
@@ -181,6 +186,58 @@ History is kept in memory only: the newest 100 events. A restart empties it. The
 - **Small quirks, left as they are:** `emit` with a number above 20 is split into several requests of at most 20, and with a non-numeric argument (for example `abc`) it sends one event. Counts below 1 or fractional counts are rejected.
 - **The tests show behaviour, not quality.** They do not measure performance or load, and they say nothing about the video.
 - **Platforms.** Only Windows 11 with Node 24.11.0 and Chrome 155 was tested.
+
+## Node.js shutdown and an open stream: a small test server
+
+A small Node.js test server that shows what the video "You Closed Your Node.js Server. Why Is the Process Still Running?" tests: what `server.close()` does while a Server-Sent Events (SSE) stream is still open, and what happens when the response is ended first. It is a teaching example, not production software.
+
+**What this is, and is not.** This is the test server only. The figures in the video (for example the 15-second wait in Measurement A and the milliseconds in Measurement B) come from recorded runs of a separate measurement harness that is not in this repository. You can reproduce the two sequences and see the same behaviour, but your timings will differ and will not match the video's numbers exactly.
+
+### What is in this folder
+
+```
+scenarios/node-shutdown-sse/
+  app/server.mjs            the test server: SSE stream and the two shutdown sequences
+  tests/server.test.mjs     7 tests, Node.js only
+```
+
+The `// >>> name` and `// <<<` comments in `server.mjs` mark the two code excerpts shown in the video (`close-only` and `end-then-close`). They have no effect on behaviour.
+
+### Prerequisites
+
+- **Node.js.** The server and tests use only Node.js built-ins; nothing to install. Tested on **Node.js 24.11.0**.
+- **curl**, to talk to the server (on Windows PowerShell use `curl.exe`, as in the video).
+- **Platform.** Tested on **Windows 11**. It has not been run on macOS or Linux.
+
+### Run it
+
+The server listens on `127.0.0.1:4182` (set `PORT` to change it). It has four routes: `GET /` (a static page), `GET /events` (the SSE stream: a retry hint of 2000 ms, then a tick every 500 ms), `GET /health`, and `POST /admin/shutdown?strategy=close-only|end-then-close`.
+
+You need three terminals.
+
+**Sequence A: `close()` with the stream open**
+
+1. Terminal 1: `node scenarios/node-shutdown-sse/app/server.mjs`
+2. Terminal 2, leave it running: `curl -N localhost:4182/events` (PowerShell: `curl.exe -N localhost:4182/events`). Ticks keep arriving.
+3. Terminal 3: `curl -X POST "localhost:4182/admin/shutdown?strategy=close-only"` (PowerShell: `curl.exe -X POST "localhost:4182/admin/shutdown?strategy=close-only"`).
+
+The server replies `{"closing":true,"strategy":"close-only"}` and prints, in terminal 1, that shutdown was requested and that `server.close()` was called with `listening: false`. While the stream in terminal 2 stays open, it does not print `close callback fired`, and the ticks in terminal 2 keep coming. (In the video's runs the callback did not fire within 15 seconds; that is a timeout, not a measure of how long it would wait.) Stop the server with Ctrl+C.
+
+**Sequence B: end the response, wait, then `close()`**
+
+Start the server again and open the stream as before, then send the request with `strategy=end-then-close`. The server ends the open response, waits for its `finish` and `close` events, then calls `server.close()`. Terminal 1 prints `close callback fired` a few milliseconds after the request, and the stream in terminal 2 ends.
+
+Neither sequence uses `closeIdleConnections()` or `closeAllConnections()`, and a test checks that the server never calls them.
+
+### Tests
+
+```
+node --test scenarios/node-shutdown-sse/tests/server.test.mjs
+```
+
+### What was tested, and what was not
+
+Tested: one small server, one Chrome, Node.js 24.11.0 on Windows 11, over loopback, with a 2000 ms retry hint, three valid runs of each sequence in the video. Not tested: other browsers, other Node.js versions, proxies, a 5000 ms retry hint, Ctrl+C, or other shutdown sequences. These results do not establish which step is the cause of the difference between A and B.
 
 ## Logo and brand assets
 

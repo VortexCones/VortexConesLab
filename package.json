@@ -21,7 +21,9 @@
     "ld:drop": "node scenarios/live-dashboard-no-refresh/app/drop.mjs",
     "ld:stage1": "node scenarios/live-dashboard-no-refresh/app/stage1.mjs",
     "ld:test": "node --test --test-timeout=60000 --test-reporter=./scenarios/live-dashboard-no-refresh/tests/reporter.mjs scenarios/live-dashboard-no-refresh/tests/stage1.test.mjs scenarios/live-dashboard-no-refresh/tests/server.test.mjs scenarios/live-dashboard-no-refresh/tests/replay-contract.test.mjs scenarios/live-dashboard-no-refresh/tests/dashboard.test.mjs",
-    "ld:prove-failure": "node scenarios/live-dashboard-no-refresh/tests/prove-failure.mjs"
+    "ld:prove-failure": "node scenarios/live-dashboard-no-refresh/tests/prove-failure.mjs",
+    "ss:app": "node scenarios/node-shutdown-sse/app/server.mjs",
+    "ss:test": "node --test --test-timeout=60000 scenarios/node-shutdown-sse/tests/server.test.mjs"
   },
   "devDependencies": {
     "playwright": "^1.64.1"
