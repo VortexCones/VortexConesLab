@@ -6,6 +6,7 @@ Videos in this repository:
 
 - **Live Dashboard: no page refresh**, in `scenarios/live-dashboard-no-refresh` (see "Live Dashboard: no page refresh" below).
 - **Node.js shutdown and an open stream**, in `scenarios/node-shutdown-sse` (see "Node.js shutdown and an open stream: a small test server" below).
+- **Codex CLI after you close the window**, in `scenarios/codex-daemon-audit` (see "Codex CLI after you close the window: process-check scripts" below).
 
 ## Live Dashboard: no page refresh
 
@@ -238,6 +239,89 @@ node --test scenarios/node-shutdown-sse/tests/server.test.mjs
 ### What was tested, and what was not
 
 Tested: one small server, one Chrome, Node.js 24.11.0 on Windows 11, over loopback, with a 2000 ms retry hint, three valid runs of each sequence in the video. Not tested: other browsers, other Node.js versions, proxies, a 5000 ms retry hint, Ctrl+C, or other shutdown sequences. These results do not establish which step is the cause of the difference between A and B.
+
+## Codex CLI after you close the window: process-check scripts
+
+Five small Windows scripts that accompany the video "You Closed Codex CLI. Why Is It Still Running? (Tested on Windows 11)". They let you open a copy of Codex CLI from a separate lab folder, list the Codex processes that belong to it, close its window, and end what is left. This is independent work and is not affiliated with or endorsed by OpenAI. No OpenAI code is included: you install Codex CLI yourself from npm.
+
+**What this is, and is not.** These are the helper scripts only. The figures in the video (start-up times, memory and processor use, the settings-file test) come from recorded runs of a separate measurement harness that is not in this repository, so your numbers will differ. Nothing here is a security finding, and nothing here says why Codex behaves this way.
+
+**Read the scripts first, and run them in a virtual machine.** A separate Codex home folder does not isolate everything. In one of our tests, with the older Codex CLI 0.157.0, Codex started its own Windows sandbox setup helper; afterwards the password-last-set time of two existing Windows sandbox accounts matched the time of our test, and sandbox firewall rules were applied again. We did not see this in five runs of 0.164.0, but a virtual machine is the safe place to repeat any of this. The scripts never read or print sign-in tokens, and they do not touch your real Codex home folder.
+
+### What is in this folder
+
+```
+scenarios/codex-daemon-audit/app/
+  observe.ps1       read-only: lists the Codex processes started from the lab folder (role, parent, age)
+  open-codex.cmd    opens the lab Codex in its own console window, like a double-click
+  run-codex.cmd     what that window runs (started by open-codex.cmd)
+  close-codex.ps1   closes that window with the same close message as its X button
+  cleanup.ps1       ends the Codex processes whose program file is inside the lab folder, and nothing else
+```
+
+### Prerequisites
+
+- **Windows 11** with PowerShell, **Node.js** and **npm**, and a Codex account you are happy to use for tests (we used a separate test account). Tested on Windows 11 Home (10.0.26300), Node.js 24.11.0, npm 11.6.1 and **Codex CLI 0.164.0**. It has not been run on macOS or Linux, or with other Codex versions except for one comparison with 0.157.0 described in the video.
+- The scripts expect a lab folder, `C:\vxlab` by default (set the `VXLAB` environment variable to use another one), laid out as in the next section.
+
+### Set up the lab
+
+```
+mkdir C:\vxlab\npm164, C:\vxlab\home
+cd C:\vxlab\npm164
+npm init -y
+npm install @openai/codex@0.164.0 --ignore-scripts
+$env:CODEX_HOME = 'C:\vxlab\home'; C:\vxlab\npm164\node_modules\.bin\codex.cmd login --device-auth
+```
+
+The last command signs in on the lab home only (we used the device-code sign-in with a test account). Copy the `app` folder somewhere outside the lab and run the scripts from there; `open-codex.cmd` writes a small `args.txt` next to itself.
+
+### Reproduce the default behaviour
+
+In a PowerShell window, from the copied scripts folder:
+
+```
+.\observe.ps1                         # nothing is running
+.\open-codex.cmd                      # Codex opens in its own window; leave it at its first screen
+.\observe.ps1 -Watch -Seconds 30      # the server and the update checker appear
+.\close-codex.ps1                     # close the window
+.\observe.ps1 -Watch -Seconds 10      # the server and the update checker are still there, with no parent
+```
+
+In our runs the two background processes appeared after 9 to 12 seconds on a quiet machine and after about 23 seconds once during a screen recording. To look at the same processes without our script (a filter on the lab folder keeps your own Codex out of the list; drop it if you want to see everything):
+
+```
+Get-CimInstance Win32_Process -Filter "Name='codex.exe'" | Where-Object ExecutablePath -like 'C:\vxlab*' | Select-Object ProcessId,ParentProcessId,CreationDate
+```
+
+### Stop it, and stop it starting
+
+```
+$env:CODEX_HOME = 'C:\vxlab\home'
+C:\vxlab\npm164\node_modules\.bin\codex.cmd app-server daemon stop    # stops the server; the update checker stays
+.\cleanup.ps1                                                         # ends what is left from the lab folder
+.\open-codex.cmd --no-daemon                                          # opens Codex without the background server
+```
+
+The settings-file form we tested once is a `config.toml` in the lab home with these two lines (then `.\open-codex.cmd` as before):
+
+```
+[features]
+daemon_auto_start = false
+```
+
+### What was tested, and what was not
+
+Tested (one PC, Windows 11 Home, a test account): three default runs of 0.164.0 (both processes appeared and stayed after the window closed; in an earlier, longer run they were still there after more than seven minutes), the stop command, three idle memory and processor samples, one run each with the no-daemon flag and the settings file (neither started a server or an update checker), and one comparison run of 0.157.0. Read but not tested: the Codex release notes from 0.157.0 to 0.164.0 and one public issue, as the video says. Not tested: other systems or versions, a restart of the machine, a busy machine, what the update checker does on its schedule, or what any of this means for security.
+
+### Clean up
+
+```
+$env:CODEX_HOME = 'C:\vxlab\home'; C:\vxlab\npm164\node_modules\.bin\codex.cmd logout
+Remove-Item C:\vxlab -Recurse -Force
+```
+
+Run `logout` only against the lab home, never your real Codex home. Then remove the device session from the test account's settings if one is listed.
 
 ## Logo and brand assets
 
