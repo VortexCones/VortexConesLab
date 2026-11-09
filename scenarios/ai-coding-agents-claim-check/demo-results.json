@@ -1,0 +1,127 @@
+{
+  "ranOn": "2026-11-08",
+  "node": "v24.11.0",
+  "rows": [
+    {
+      "task": "t1-duration",
+      "quick": {
+        "visible": {
+          "pass": 4,
+          "fail": 0
+        },
+        "hidden": {
+          "pass": 2,
+          "fail": 4
+        }
+      },
+      "careful": {
+        "visible": {
+          "pass": 4,
+          "fail": 0
+        },
+        "hidden": {
+          "pass": 6,
+          "fail": 0
+        }
+      }
+    },
+    {
+      "task": "t2-slug",
+      "quick": {
+        "visible": {
+          "pass": 4,
+          "fail": 0
+        },
+        "hidden": {
+          "pass": 8,
+          "fail": 1
+        }
+      },
+      "careful": {
+        "visible": {
+          "pass": 4,
+          "fail": 0
+        },
+        "hidden": {
+          "pass": 9,
+          "fail": 0
+        }
+      }
+    },
+    {
+      "task": "t3-lru",
+      "quick": {
+        "visible": {
+          "pass": 4,
+          "fail": 0
+        },
+        "hidden": {
+          "pass": 4,
+          "fail": 3
+        }
+      },
+      "careful": {
+        "visible": {
+          "pass": 4,
+          "fail": 0
+        },
+        "hidden": {
+          "pass": 7,
+          "fail": 0
+        }
+      }
+    },
+    {
+      "task": "t4-csv",
+      "quick": {
+        "visible": {
+          "pass": 4,
+          "fail": 0
+        },
+        "hidden": {
+          "pass": 6,
+          "fail": 3
+        }
+      },
+      "careful": {
+        "visible": {
+          "pass": 4,
+          "fail": 0
+        },
+        "hidden": {
+          "pass": 9,
+          "fail": 0
+        }
+      }
+    },
+    {
+      "task": "t5-intervals",
+      "quick": {
+        "visible": {
+          "pass": 4,
+          "fail": 0
+        },
+        "hidden": {
+          "pass": 6,
+          "fail": 2
+        }
+      },
+      "careful": {
+        "visible": {
+          "pass": 4,
+          "fail": 0
+        },
+        "hidden": {
+          "pass": 8,
+          "fail": 0
+        }
+      }
+    }
+  ],
+  "summary": {
+    "tasks": 5,
+    "quickPassEveryVisibleTest": 5,
+    "quickFailAHiddenTest": 5,
+    "hiddenTestsMissedInTotal": 13
+  }
+}
