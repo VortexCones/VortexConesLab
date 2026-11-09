@@ -7,6 +7,7 @@ Videos in this repository:
 - **Live Dashboard: no page refresh**, in `scenarios/live-dashboard-no-refresh` (see "Live Dashboard: no page refresh" below).
 - **Node.js shutdown and an open stream**, in `scenarios/node-shutdown-sse` (see "Node.js shutdown and an open stream: a small test server" below).
 - **Codex CLI after you close the window**, in `scenarios/codex-daemon-audit` (see "Codex CLI after you close the window: process-check scripts" below).
+- **Do AI coding tools make developers faster?**, in `scenarios/ai-coding-agents-claim-check` (see "Visible tests versus hidden tests: a small check" below).
 
 ## Live Dashboard: no page refresh
 
@@ -322,6 +323,18 @@ Remove-Item C:\vxlab -Recurse -Force
 ```
 
 Run `logout` only against the lab home, never your real Codex home. Then remove the device session from the test account's settings if one is listed.
+
+## Visible tests versus hidden tests: a small check
+
+A small, self-contained check that accompanies the VortexCones video "Do AI Coding Tools Make Developers Faster?". Five small programming tasks, each with a quick solution and a careful one, run against the tests a solution-writer can see and against edge-case tests that were kept back. It needs only Node.js 20 or newer: no packages, no network, no account, no AI tool.
+
+```
+cd scenarios/ai-coding-agents-claim-check
+node run-demo.mjs        # quick vs careful solutions, visible vs hidden tests
+node check-tasks.mjs     # proves the tasks themselves are sound
+```
+
+**What this is, and is not.** The quick solutions were written for the video, on purpose, to look plausible and to miss edge cases. They are not results from any AI tool, and nothing here says any tool makes these mistakes. It is an illustration, not a measurement. The folder has its own README with the full explanation.
 
 ## Logo and brand assets
 
